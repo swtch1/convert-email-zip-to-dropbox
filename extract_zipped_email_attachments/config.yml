@@ -1,0 +1,8 @@
+imap:
+  server:
+    incoming: secure.emailsrvr.com
+    outgoing: secure.emailsrvr.com
+  port:
+    incoming: 993
+    outgoing: 465
+temp_download_dir: c:/email_attachments/
