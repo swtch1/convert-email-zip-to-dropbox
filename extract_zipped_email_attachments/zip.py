@@ -13,7 +13,10 @@ class ZippedFile(object):
         if not zipfile.is_zipfile(self.zip_file):
             raise EnvironmentError('{} is not a zip file'.format(self.zip_file))
         if not isinstance(self.password, str) or self.password == None:
-            raise TypeError('password must be a string')
+            try:
+                self.password = str(self.password)
+            except:
+                raise TypeError('password must be a string')
 
     def get_pdfs(self):
         """

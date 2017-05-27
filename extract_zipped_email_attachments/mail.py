@@ -7,27 +7,22 @@ from extract_zipped_email_attachments.settings import config, auth
 from extract_zipped_email_attachments.utilities import convert_bytes_to_string
 
 
-svdir = 'c:/downloads'
-
-def establish_imap_session():
-    session = imaplib.IMAP4_SSL(host=config['imap']['server']['incoming'],
-                                port=config['imap']['port']['incoming'])
-    typ, account_details = session.login(user=auth['email']['address'],
-                                         password=auth['email']['password'])
+def establish_imap_session(host, port, user, password):
+    session = imaplib.IMAP4_SSL(host=host, port=port)
+    typ, account_details = session.login(user=user, password=password)
 
     if typ != 'OK':
         print('unable to sign in')  # FIXME
         exit(1)
-
     return session
 
-#######################
-imap_session = imaplib.IMAP4_SSL('secure.emailsrvr.com')
-imap_session.login('sterling@jlmanagement.net', '#wzs4zuau')
-imap_session.select('Inbox/email_testing_remove_after_6_1_17')
-# imap_session.select('Inbox/Advance-Monroe')
-typ, message_ids = imap_session.search(None, 'ALL')
-#######################
+# #######################  # TODO: Remove - testing
+# imap_session = imaplib.IMAP4_SSL('secure.emailsrvr.com')
+# imap_session.login('sterling@jlmanagement.net', '#wzs4zuau')
+# imap_session.select('Inbox/email_testing_remove_after_6_1_17')
+# # imap_session.select('Inbox/Advance-Monroe')
+# typ, message_ids = imap_session.search(None, 'ALL')
+# #######################
 
 def ensure_mail_folder_exists(session, folder):
     """
@@ -78,7 +73,8 @@ def get_message_ids(session, folder):
     return [convert_bytes_to_string(message_id) for message_id in message_ids]
 
 
-def download_attachment(session, message_id, download_dir):
+def download_attachment(session, folder, message_id, download_dir):
+    session.select(folder)
     typ, message_parts = session.fetch(message_id, '(RFC822)')
     if typ != 'OK':
         print('error fetching mail')  # FIXME
@@ -97,6 +93,4 @@ def download_attachment(session, message_id, download_dir):
             return file_name
     except:
         print('error downloading file from message with id {}'.format(message_id))  # FIXME
-
-
 
