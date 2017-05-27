@@ -5,3 +5,4 @@ imap:
   port:
     incoming: 993
     outgoing: 465
+reports_folder_suffix: -reports
