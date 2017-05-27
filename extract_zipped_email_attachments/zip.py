@@ -8,6 +8,8 @@ class ZippedFile(object):
         self.zip_file = zip_file
         self.password = password
 
+        if isinstance(self.zip_file, None):
+            self.zip_file = 'not found'  # TODO: I need a better way to handle this.
         if not os.path.isfile(self.zip_file):
             raise FileNotFoundError('{} does not exist'.format(self.zip_file))
         if not zipfile.is_zipfile(self.zip_file):
