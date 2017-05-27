@@ -22,15 +22,19 @@ if __name__ == '__main__':
 
         unique_subjects = get_unique_dict_keys(src_subjects, dest_subjects)
 
-        # with tempfile.TemporaryDirectory() as downloads_dir:
-        #     for subject in unique_subjects:
-        #           stuff here
-        #     os.removedirs(downloads_dir)
-
-        downloads_dir = 'c:/Temp/'
-        for subject in unique_subjects:
-            attachment = mail.download_attachment(imap_session, src_folder, src_subjects[subject], downloads_dir)
-            zipped_file = ZippedFile(attachment, password=auth['zip']['password'])
-            pdfs = zipped_file.get_pdfs()
-            for pdf in pdfs:
-                zipped_file.extract_file(pdf, downloads_dir)
+        with tempfile.TemporaryDirectory() as downloads_dir:
+            for subject in unique_subjects:
+                attachment = mail.download_attachment(imap_session, src_folder, src_subjects[subject], downloads_dir)
+                zipped_file = ZippedFile(attachment, password=auth['zip']['password'])
+                if zipped_file.zip_file == 'not found':
+                    continue
+                pdfs = zipped_file.get_pdfs()
+                for pdf in pdfs:
+                    fully_qualified_pdf = os.path.join(downloads_dir, pdf)
+                    zipped_file.extract_file(pdf, downloads_dir)
+                    mail.append_message(session=imap_session,
+                                        folder=dest_folder,
+                                        subject=subject,
+                                        to_address=auth['email']['address'],
+                                        from_address=auth['email']['reports_from_address'],
+                                        attachment=fully_qualified_pdf)
