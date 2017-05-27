@@ -31,9 +31,9 @@ typ, message_ids = imap_session.search(None, 'ALL')
 
 def ensure_mail_folder_exists(session, folder):
     """
-    Ensure that a particular folder exists.  If it does not, make it.
+    Ensure that a particular src_folder exists.  If it does not, make it.
     :param session: imap session
-    :param folder: name of folder to check or create
+    :param folder: name of src_folder to check or create
     :return: None
     """
     session.create(folder)
@@ -54,7 +54,7 @@ def _get_message_subject(session, message_id):
 
 def build_message_subjects_dict(session, message_ids: list):
     """
-    Build a dictionary of subjects and message IDs from a message list.
+    Build a dictionary of src_subjects and message IDs from a message list.
     :param message_ids: 
     :return: dict
     """
@@ -74,7 +74,7 @@ def get_message_ids(session, folder):
     session.select(folder)
     typ, message_ids = session.search(None, 'ALL')
     if typ != 'OK':
-        print('error searching folder')  # FIXME
+        print('error searching src_folder')  # FIXME
     return [convert_bytes_to_string(message_id) for message_id in message_ids]
 
 
