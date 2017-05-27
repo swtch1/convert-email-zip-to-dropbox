@@ -5,4 +5,3 @@ imap:
   port:
     incoming: 993
     outgoing: 465
-temp_download_dir: c:/email_attachments/

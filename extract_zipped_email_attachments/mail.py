@@ -1,6 +1,7 @@
 import imaplib
 import email
 import re
+import os
 
 from extract_zipped_email_attachments.settings import config, auth
 from extract_zipped_email_attachments.utilities import convert_bytes_to_string
@@ -28,7 +29,7 @@ imap_session.select('Inbox/email_testing_remove_after_6_1_17')
 typ, message_ids = imap_session.search(None, 'ALL')
 #######################
 
-def ensure_folder_exists(session, folder):
+def ensure_mail_folder_exists(session, folder):
     """
     Ensure that a particular folder exists.  If it does not, make it.
     :param session: imap session
@@ -75,5 +76,27 @@ def get_message_ids(session, folder):
     if typ != 'OK':
         print('error searching folder')  # FIXME
     return [convert_bytes_to_string(message_id) for message_id in message_ids]
+
+
+def download_attachment(session, message_id, download_dir):
+    typ, message_parts = session.fetch(message_id, '(RFC822)')
+    if typ != 'OK':
+        print('error fetching mail')  # FIXME
+
+    try:
+        email_body = message_parts[0][1]
+        mail = email.message_from_string(convert_bytes_to_string(email_body))
+        for part in mail.walk():
+            if part.get_content_maintype() == 'multipart':
+                continue
+            if part.get('Content-Disposition') is None:
+                continue
+            file_name = os.path.join(download_dir, part.get_filename())
+            with open(file_name, 'wb') as attachment:
+                attachment.write(part.get_payload(decode=True))
+            return file_name
+    except:
+        print('error downloading file from message with id {}'.format(message_id))  # FIXME
+
 
 
