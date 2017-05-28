@@ -6,8 +6,6 @@ from email import message_from_string, encoders
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 
-from extract_zipped_email_attachments.utilities import convert_bytes_to_string
-
 
 def establish_imap_session(host, port, user, password):
     print('creating imap session')  # FIXME
@@ -37,10 +35,12 @@ def _get_message_subject(session, message_id):
     :param message_id: id of the message to get subject for
     :return: message subject
     """
-    msg_string = convert_bytes_to_string(session.fetch(str(message_id), '(RFC822)')[1][0][1])
-    for msg in msg_string.split('\r\n'):
-        if re.match('Subject: .*', msg):
-            return re.sub('Subject: ', '', msg)
+    typ, msg_data = session.fetch(message_id, '(BODY.PEEK[HEADER])')
+    if typ == 'OK':
+        msg = message_from_string(msg_data[0][1].decode())
+        return msg['subject'].replace('\r\n', '')
+    else:
+        raise ValueError('error fetching message with id {}'.format(message_id))
 
 
 def get_messages_metadata(session, message_ids: list):
