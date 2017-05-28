@@ -1,6 +1,7 @@
 import tempfile
 import os
 import re
+import zipfile
 
 from extract_zipped_email_attachments.settings import config, auth
 from extract_zipped_email_attachments.utilities import get_unique_dict_keys
@@ -28,10 +29,10 @@ if __name__ == '__main__':
                 attachment = mail.download_attachment(imap_session, src_folder, src_subjects[subject], downloads_dir)
                 if not re.match(config['reports']['subject_match_regex'], subject.lower()):
                     continue
-                if not re.match('.*\.zip', os.path.basename(attachment).lower()):
+                if not zipfile.is_zipfile(attachment):
                     continue
                 zipped_file = ZippedFile(attachment, password=auth['zip']['password'])
-                if zipped_file.zip_invalid:
+                if zipped_file.zip_invalid:  # TODO: Remove after verification it's not needed anymore.
                     continue
                 pdfs = zipped_file.get_pdfs()
                 for pdf in pdfs:
