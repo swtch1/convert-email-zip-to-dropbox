@@ -53,7 +53,7 @@ def get_messages_metadata(session, message_ids: list):
     print('building message metadata dictionary')  # FIXME
     metadata = {}
     for message_id in message_ids:
-        msg_string = convert_bytes_to_string(session.fetch(str(message_id), '(RFC822)')[1][0][1])
+        msg_string = session.fetch(str(message_id), '(RFC822)')[1][0][1].decode()
         split_msg = msg_string.split('\r\n')
         for part in split_msg:
             if re.match('^Subject: .*', part):
