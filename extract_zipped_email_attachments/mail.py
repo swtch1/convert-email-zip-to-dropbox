@@ -93,7 +93,7 @@ def download_attachment(session, folder, message_id, download_dir):
 
     try:
         email_body = message_parts[0][1]
-        mail = message_from_string(convert_bytes_to_string(email_body))
+        mail = message_from_string(email_body.decode())
         for part in mail.walk():
             if part.get_content_maintype() == 'multipart':
                 continue
