@@ -8,6 +8,4 @@ imap:
 reports:
   # suffix to append to folder where reports will be stored
   folder_suffix: -reports
-  # regex string required to match on subject line for processing
-  subject_match_regex: '.*close\sout\sreports.*'
 
