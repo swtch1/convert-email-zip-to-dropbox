@@ -46,12 +46,12 @@ def _get_message_subject(session, message_id):
 def build_message_subjects_dict(session, message_ids: list):
     """
     Build a dictionary of src_subjects and message IDs from a message list.
-    :param message_ids: 
+    :param message_ids: list of message ids to process
     :return: dict
     """
     print('building message subjects dictionary')  # FIXME
     subjects = {}
-    for i in message_ids[0].split():
+    for i in message_ids:
         subjects[_get_message_subject(session, i)] = i
     return subjects
 
@@ -69,7 +69,7 @@ def get_message_ids(session, folder):
     if typ != 'OK':
         print('error searching src_folder')  # FIXME
     print('found {} messages in folder {}'.format(len(message_ids[0].split()), folder))  # FIXME
-    return [convert_bytes_to_string(message_id) for message_id in message_ids]
+    return [convert_bytes_to_string(message_id) for message_id in message_ids][0].split()
 
 
 def download_attachment(session, folder, message_id, download_dir):
