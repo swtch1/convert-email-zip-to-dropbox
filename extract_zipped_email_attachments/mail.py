@@ -35,9 +35,9 @@ def _get_message_subject(session, message_id):
     :param message_id: id of the message to get subject for
     :return: message subject
     """
-    typ, msg_data = session.fetch(message_id, '(BODY.PEEK[HEADER])')
+    typ, message_parts = session.fetch(message_id, '(BODY.PEEK[HEADER])')
     if typ == 'OK':
-        msg = message_from_string(msg_data[0][1].decode())
+        msg = message_from_string(message_parts[0][1].decode())
         return msg['subject'].replace('\r\n', '')
     else:
         raise ValueError('error fetching message with id {}'.format(message_id))
@@ -85,6 +85,14 @@ def get_message_ids(session, folder, search_criteria='ALL'):
 
 
 def download_attachment(session, folder, message_id, download_dir):
+    """
+    Donwnload an attachment from an email, by message id
+    :param session: imap session
+    :param folder: inbox to search
+    :param message_id: id of message to download attachment from
+    :param download_dir: target directory to save attachment to
+    :return: str: path of downloaded attachment
+    """
     print('downloading attachment for message id {}'.format(message_id))
     session.select(folder, readonly=True)
     typ, message_parts = session.fetch(message_id, '(RFC822)')
@@ -92,9 +100,8 @@ def download_attachment(session, folder, message_id, download_dir):
         print('error fetching mail')  # FIXME
 
     try:
-        email_body = message_parts[0][1]
-        mail = message_from_string(email_body.decode())
-        for part in mail.walk():
+        msg = message_from_string(message_parts[0][1].decode())
+        for part in msg.walk():
             if part.get_content_maintype() == 'multipart':
                 continue
             if part.get('Content-Disposition') is None:
