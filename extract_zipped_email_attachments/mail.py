@@ -76,7 +76,7 @@ def get_message_ids(session, folder, search_criteria='ALL'):
     :return: list of message ids, as strings
     """
     print('getting message ids')  # FIXME
-    session.select(folder)
+    session.select(folder, readonly=True)
     typ, message_ids = session.search(None, 'ALL')
     if typ != 'OK':
         print('error searching src_folder')  # FIXME
@@ -86,7 +86,7 @@ def get_message_ids(session, folder, search_criteria='ALL'):
 
 def download_attachment(session, folder, message_id, download_dir):
     print('downloading attachment for message id {}'.format(message_id))
-    session.select(folder)
+    session.select(folder, readonly=True)
     typ, message_parts = session.fetch(message_id, '(RFC822)')
     if typ != 'OK':
         print('error fetching mail')  # FIXME
