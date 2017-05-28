@@ -18,15 +18,15 @@ if __name__ == '__main__':
         mail.ensure_mail_folder_exists(imap_session, dest_folder)
 
         src_message_ids = mail.get_message_ids(imap_session, src_folder)
-        src_subjects = mail.build_message_subjects_dict(imap_session, src_message_ids) if src_message_ids != [''] else {}
+        src_messages_metadata = mail.get_messages_metadata(imap_session, src_message_ids) if src_message_ids != [''] else {}
         dest_message_ids = mail.get_message_ids(imap_session, dest_folder)
-        dest_subjects = mail.build_message_subjects_dict(imap_session, dest_message_ids) if dest_message_ids != [''] else {}
+        dest_messages_metadata = mail.get_messages_metadata(imap_session, dest_message_ids) if dest_message_ids != [''] else {}
 
-        unique_subjects = get_unique_dict_keys(src_subjects, dest_subjects)
+        unique_subjects = get_unique_dict_keys(src_messages_metadata, dest_messages_metadata)
 
         with tempfile.TemporaryDirectory() as downloads_dir:
             for subject in unique_subjects:
-                attachment = mail.download_attachment(imap_session, src_folder, src_subjects[subject], downloads_dir)
+                attachment = mail.download_attachment(imap_session, src_folder, src_messages_metadata[subject]['message_id'], downloads_dir)
                 if not re.match(config['reports']['subject_match_regex'], subject.lower()):
                     continue
                 if not zipfile.is_zipfile(attachment):

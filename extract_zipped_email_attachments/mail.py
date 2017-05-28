@@ -43,17 +43,28 @@ def _get_message_subject(session, message_id):
             return re.sub('Subject: ', '', msg)
 
 
-def build_message_subjects_dict(session, message_ids: list):
+def get_messages_metadata(session, message_ids: list):
     """
-    Build a dictionary of src_subjects and message IDs from a message list.
+    Build a dictionary of src_messages_metadata and message IDs from a message list.
     :param message_ids: list of message ids to process
     :return: dict
     """
-    print('building message subjects dictionary')  # FIXME
-    subjects = {}
-    for i in message_ids:
-        subjects[_get_message_subject(session, i)] = i
-    return subjects
+    # TODO: This is too complex.. make this a class.
+    print('building message metadata dictionary')  # FIXME
+    metadata = {}
+    for message_id in message_ids:
+        msg_string = convert_bytes_to_string(session.fetch(str(message_id), '(RFC822)')[1][0][1])
+        split_msg = msg_string.split('\r\n')
+        for part in split_msg:
+            if re.match('^Subject: .*', part):
+                subject = re.sub('Subject: ', '', part)
+                break
+        metadata[subject] = {'message_id': message_id}
+        for part in split_msg:
+            date_regex = '[0-9]{1,2}\s[A-Z]{1}[a-z]{2}\s[1,2][9,0]\d{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}'
+            if re.match('^Date: .*{}\s.*'.format(date_regex), part):
+                metadata[subject] = {'date': re.search(date_regex, part).group()}
+    return metadata
 
 
 def get_message_ids(session, folder):
