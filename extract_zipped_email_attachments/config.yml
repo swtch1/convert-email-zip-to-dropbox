@@ -5,5 +5,9 @@ imap:
   port:
     incoming: 993
     outgoing: 465
-reports_folder_suffix: -reports
+reports:
+  # suffix to append to folder where reports will be stored
+  folder_suffix: -reports
+  # regex string required to match on subject line for processing
+  subject_match_regex: '.*close\sout\sreports.*'
 

@@ -1,5 +1,6 @@
 import tempfile
 import os
+import re
 
 from extract_zipped_email_attachments.settings import config, auth
 from extract_zipped_email_attachments.utilities import get_unique_dict_keys
@@ -12,7 +13,7 @@ if __name__ == '__main__':
                                                user=auth['email']['address'],
                                                password=auth['email']['password'])
     for src_folder in auth['email']['folders_to_search']:
-        dest_folder = src_folder + config['reports_folder_suffix']
+        dest_folder = src_folder + config['reports']['folder_suffix']
         mail.ensure_mail_folder_exists(imap_session, dest_folder)
 
         src_message_ids = mail.get_message_ids(imap_session, src_folder)
@@ -25,6 +26,10 @@ if __name__ == '__main__':
         with tempfile.TemporaryDirectory() as downloads_dir:
             for subject in unique_subjects:
                 attachment = mail.download_attachment(imap_session, src_folder, src_subjects[subject], downloads_dir)
+                if not re.match(config['reports']['subject_match_regex'], subject.lower()):
+                    continue
+                if not re.match('.*\.zip', os.path.basename(attachment).lower()):
+                    continue
                 zipped_file = ZippedFile(attachment, password=auth['zip']['password'])
                 if zipped_file.zip_invalid:
                     continue
