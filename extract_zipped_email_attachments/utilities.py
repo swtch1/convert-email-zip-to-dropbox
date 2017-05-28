@@ -1,14 +1,3 @@
-def convert_bytes_to_string(bytes_object):
-    """
-    Ensure the object passed in is returned as a string.
-    :param bytes_object: object to convert
-    :return: str
-    """
-    if isinstance(bytes_object, str):
-        return bytes_object
-    return bytes_object.decode('utf-8')
-
-
 def get_unique_dict_keys(dict1, dict2):
     """
     Get the keys that are in one dict but not both.

@@ -68,7 +68,7 @@ def get_messages_metadata(session, message_ids: list):
     return metadata
 
 
-def get_message_ids(session, folder):
+def get_message_ids(session, folder, search_criteria='ALL'):
     """
     Get message ids for all messages in an inbox.
     :param session: imap session
@@ -81,7 +81,7 @@ def get_message_ids(session, folder):
     if typ != 'OK':
         print('error searching src_folder')  # FIXME
     print('found {} messages in folder {}'.format(len(message_ids[0].split()), folder))  # FIXME
-    return [convert_bytes_to_string(message_id) for message_id in message_ids][0].split()
+    return [message_id.decode() for message_id in message_ids][0].split()
 
 
 def download_attachment(session, folder, message_id, download_dir):
