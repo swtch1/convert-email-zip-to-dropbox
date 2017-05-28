@@ -73,6 +73,7 @@ def get_message_ids(session, folder):
 
 
 def download_attachment(session, folder, message_id, download_dir):
+    print('downloading attachment for message id {}'.format(message_id))
     session.select(folder)
     typ, message_parts = session.fetch(message_id, '(RFC822)')
     if typ != 'OK':
@@ -95,6 +96,7 @@ def download_attachment(session, folder, message_id, download_dir):
 
 
 def append_message(session, folder, subject, to_address, from_address, attachment):
+    print('appending attachment with subject {} to folder {}'.format(subject, folder))
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['To'] = to_address

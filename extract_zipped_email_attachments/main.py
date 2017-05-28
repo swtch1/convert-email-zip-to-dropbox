@@ -26,7 +26,7 @@ if __name__ == '__main__':
             for subject in unique_subjects:
                 attachment = mail.download_attachment(imap_session, src_folder, src_subjects[subject], downloads_dir)
                 zipped_file = ZippedFile(attachment, password=auth['zip']['password'])
-                if zipped_file.zip_file == 'not found':
+                if zipped_file.zip_invalid:
                     continue
                 pdfs = zipped_file.get_pdfs()
                 for pdf in pdfs:

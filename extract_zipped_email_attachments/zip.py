@@ -7,13 +7,16 @@ class ZippedFile(object):
     def __init__(self, zip_file, password=None):
         self.zip_file = zip_file
         self.password = password
+        self.zip_invalid = False
 
-        if isinstance(self.zip_file, None):
-            self.zip_file = 'not found'  # TODO: I need a better way to handle this.
+        if self.zip_file is None:
+            self.zip_invalid = True
+            return
         if not os.path.isfile(self.zip_file):
             raise FileNotFoundError('{} does not exist'.format(self.zip_file))
         if not zipfile.is_zipfile(self.zip_file):
-            raise EnvironmentError('{} is not a zip file'.format(self.zip_file))
+            self.zip_invalid = True
+            return
         if not isinstance(self.password, str) or self.password == None:
             try:
                 self.password = str(self.password)
@@ -25,6 +28,7 @@ class ZippedFile(object):
         Return all PDF files included in the archive.
         :return: list
         """
+        print('getting pdfs from zip archive')  # FIXME
         with zipfile.ZipFile(self.zip_file, 'r') as zipped_file:
             return [pdf for pdf in zipped_file.namelist() if re.match('.*\.pdf', pdf.lower())]
 
