@@ -59,11 +59,12 @@ def get_messages_metadata(session, message_ids: list):
             if re.match('^Subject: .*', part):
                 subject = re.sub('Subject: ', '', part)
                 break
-        metadata[subject] = {'message_id': message_id}
+        metadata[subject] = {}
+        metadata[subject]['message_id'] = message_id
         for part in split_msg:
             date_regex = '[0-9]{1,2}\s[A-Z]{1}[a-z]{2}\s[1,2][9,0]\d{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}'
             if re.match('^Date: .*{}\s.*'.format(date_regex), part):
-                metadata[subject] = {'date': re.search(date_regex, part).group()}
+                metadata[subject]['date'] = re.search(date_regex, part).group()
     return metadata
 
 
