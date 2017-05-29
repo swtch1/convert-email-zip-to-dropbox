@@ -10,11 +10,15 @@ class ZippedFile(object):
         self.zip_invalid = False
 
         if self.zip_file is None:
+            print('expected zipfile, got None')  # FIXME
             self.zip_invalid = True
             return
         if not os.path.isfile(self.zip_file):
-            raise FileNotFoundError('{} does not exist'.format(self.zip_file))
+            print('{} does not exist'.format(self.zip_file))  # FIXME
+            self.zip_invalid = True
+            return
         if not zipfile.is_zipfile(self.zip_file):
+            print('{} is not a zip file'.format(self.zip_file))
             self.zip_invalid = True
             return
         if not isinstance(self.password, str) or self.password == None:
