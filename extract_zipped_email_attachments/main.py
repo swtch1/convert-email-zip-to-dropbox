@@ -29,12 +29,11 @@ if __name__ == '__main__':
         unique_subjects = get_unique_dict_keys(src_messages_metadata, dest_messages_metadata)
 
         with tempfile.TemporaryDirectory() as downloads_dir:
-            for subject in unique_subjects:
+            for subject in sorted(unique_subjects, key=lambda x: int(src_messages_metadata[x]['message_id'])):
+                print('processing id {}'.format(int(src_messages_metadata[subject]['message_id'])))  # TODO: remove - testing
                 attachment = mail.download_attachment(imap_session, src_folder, src_messages_metadata[subject]['message_id'], downloads_dir)
-                if not zipfile.is_zipfile(attachment):
-                    continue
                 zipped_file = ZippedFile(attachment, password=auth['zip']['password'])
-                if zipped_file.zip_invalid:  # TODO: Remove after verification it's not needed anymore.
+                if zipped_file.zip_invalid:
                     continue
                 pdfs = zipped_file.get_pdfs()
                 for pdf in pdfs:
