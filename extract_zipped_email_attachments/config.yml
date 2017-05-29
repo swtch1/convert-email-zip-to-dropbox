@@ -8,4 +8,6 @@ imap:
 reports:
   # suffix to append to folder where reports will be stored
   folder_suffix: -reports
-
+# time in seconds to sleep between checking for new messages
+sleep_time_between_checks: 10
+threading_enabled: true

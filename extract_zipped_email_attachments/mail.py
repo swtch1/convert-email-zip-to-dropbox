@@ -53,7 +53,12 @@ def get_messages_metadata(session, message_ids: list):
     print('building message metadata dictionary')  # FIXME
     metadata = {}
     for message_id in message_ids:
-        msg_string = session.fetch(str(message_id), '(RFC822)')[1][0][1].decode()
+        msg_bytes = session.fetch(str(message_id), '(RFC822)')[1][0][1]
+        try:
+            msg_string = msg_bytes.decode()
+        except:
+            print('{} of type {}'.format(msg_bytes, type(msg_bytes)))
+            import pdb; pdb.set_trace()
         split_msg = msg_string.split('\r\n')
         for part in split_msg:
             if re.match('^Subject: .*', part):
@@ -61,10 +66,10 @@ def get_messages_metadata(session, message_ids: list):
                 break
         metadata[subject] = {}
         metadata[subject]['message_id'] = message_id
-        for part in split_msg:
-            date_regex = '[0-9]{1,2}\s[A-Z]{1}[a-z]{2}\s[1,2][9,0]\d{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}'
-            if re.match('^Date: .*{}\s.*'.format(date_regex), part):
-                metadata[subject]['date'] = re.search(date_regex, part).group()
+        # for part in split_msg:
+        #     date_regex = '[0-9]{1,2}\s[A-Z]{1}[a-z]{2}\s[1,2][9,0]\d{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}'
+        #     if re.match('^Date: .*{}\s.*'.format(date_regex), part):
+        #         metadata[subject]['date'] = re.search(date_regex, part).group()
     return metadata
 
 
@@ -77,10 +82,10 @@ def get_message_ids(session, folder, search_criteria='ALL'):
     """
     print('getting message ids')  # FIXME
     session.select(folder, readonly=True)
-    typ, message_ids = session.search(None, 'ALL')
+    typ, message_ids = session.search(None, search_criteria)
     if typ != 'OK':
         print('error searching src_folder')  # FIXME
-    print('found {} messages in folder {}'.format(len(message_ids[0].split()), folder))  # FIXME
+    print('found {} messages in folder {}'.format(len(message_ids), folder))  # FIXME
     return [message_id.decode() for message_id in message_ids][0].split()
 
 
