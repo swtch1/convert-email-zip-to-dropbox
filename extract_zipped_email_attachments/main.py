@@ -2,11 +2,11 @@ import tempfile
 import os
 
 from extract_zipped_email_attachments.settings import config, auth
-# from extract_zipped_email_attachments.utilities import get_unique_dict_keys
 from extract_zipped_email_attachments.zip import ZippedFile
 from extract_zipped_email_attachments import mail
 
-if __name__ == '__main__':
+
+def worker():
     imap_session = mail.establish_imap_session(host=config['imap']['server']['incoming'],
                                                port=config['imap']['port']['incoming'],
                                                user=auth['email']['address'],
@@ -45,3 +45,9 @@ if __name__ == '__main__':
                                         to_address=auth['email']['address'],
                                         from_address=auth['email']['send_reports_from_address'],
                                         attachment=fully_qualified_pdf)
+
+if __name__ == '__main__':
+    try:
+        worker()
+    except Exception as e:
+        print(e)  # FIXME
