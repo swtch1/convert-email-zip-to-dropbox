@@ -77,11 +77,20 @@ def get_message_ids(session, folder, search_criteria='ALL'):
     """
     print('getting message ids')  # FIXME
     session.select(folder, readonly=True)
-    typ, message_ids = session.search(None, 'ALL')
+    typ, message_ids = session.search(None, search_criteria)
     if typ != 'OK':
         print('error searching src_folder')  # FIXME
     print('found {} messages in folder {}'.format(len(message_ids[0].split()), folder))  # FIXME
     return [message_id.decode() for message_id in message_ids][0].split()
+
+
+def get_message_id_by_subject(subject, *metadata_dicts):
+    for md in metadata_dicts:
+        try:
+            return str(md[subject]['message_id'])
+        except KeyError as e:
+            pass
+    raise LookupError('subject {} does not exist in provided dicts'.format(subject))
 
 
 def download_attachment(session, folder, message_id, download_dir):
