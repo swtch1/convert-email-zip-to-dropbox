@@ -1,10 +1,8 @@
 import tempfile
 import os
-import re
-import zipfile
 
 from extract_zipped_email_attachments.settings import config, auth
-from extract_zipped_email_attachments.utilities import get_unique_dict_keys
+# from extract_zipped_email_attachments.utilities import get_unique_dict_keys
 from extract_zipped_email_attachments.zip import ZippedFile
 from extract_zipped_email_attachments import mail
 
@@ -26,12 +24,14 @@ if __name__ == '__main__':
                                                 folder=dest_folder)
         dest_messages_metadata = mail.get_messages_metadata(imap_session, dest_message_ids) if dest_message_ids != [''] else {}
 
-        unique_subjects = get_unique_dict_keys(src_messages_metadata, dest_messages_metadata)
+        unique_subjects = src_messages_metadata.keys() - dest_messages_metadata.keys()
+        sorted_unique_subjects = sorted(unique_subjects, key=lambda x: int(mail.get_message_id_by_subject(x, src_messages_metadata)))
 
         with tempfile.TemporaryDirectory() as downloads_dir:
-            for subject in sorted(unique_subjects, key=lambda x: int(src_messages_metadata[x]['message_id'])):
-                print('processing id {}'.format(int(src_messages_metadata[subject]['message_id'])))  # TODO: remove - testing
-                attachment = mail.download_attachment(imap_session, src_folder, src_messages_metadata[subject]['message_id'], downloads_dir)
+            for subject in sorted_unique_subjects:
+                message_id = mail.get_message_id_by_subject(subject, src_messages_metadata)
+                print('processing id {}'.format(message_id))  # TODO: remove - testing
+                attachment = mail.download_attachment(imap_session, src_folder, message_id, downloads_dir)
                 zipped_file = ZippedFile(attachment, password=auth['zip']['password'])
                 if zipped_file.zip_invalid:
                     continue
