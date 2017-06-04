@@ -10,4 +10,4 @@ reports:
   folder_suffix: -reports
 # time in seconds to sleep between checking for new messages
 sleep_time_between_checks: 10
-threading_enabled: true
+threading_enabled: false

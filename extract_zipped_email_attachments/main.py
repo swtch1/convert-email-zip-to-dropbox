@@ -4,33 +4,49 @@ import time
 import threading
 import queue
 import imaplib
+import re
 
 from extract_zipped_email_attachments.settings import config, auth
-from extract_zipped_email_attachments.utilities import get_unique_dict_keys
 from extract_zipped_email_attachments.zip import ZippedFile
 from extract_zipped_email_attachments import mail
 
 src_metadata_queue = queue.Queue()
 dest_metadata_queue = queue.Queue()
-imap_session = None
 src_messages_metadata = None
 dest_messages_metadata = None
 
 
-def build_metadata(queue, session, folder, search_criteria):
-    message_ids = mail.get_message_ids(session=session,
-                                       folder=folder,
-                                       search_criteria=search_criteria)
-    metadata = mail.get_messages_metadata(session=session,
-                                          message_ids=message_ids)
-    ret = metadata if message_ids != [''] else {}
-    if config['threading_enabled']:
-        queue.put(ret)
-    else:
-        return ret
+def build_metadata(results_queue, session, folder, search_criteria):
+    """
+    Build the metadata dictionary which contains information about messages.
+    If threading is enabled this will run forever, updating the metadata dictionary when necessary.
+    :param results_queue: the queue to add results to, when threading
+    :param session: imap session
+    :param folder: inbox folder to select
+    :param search_criteria: search narrowing criteria
+    :return: dict: metadata dictionary
+    """
+    num_previous_message_ids = 0
+    while True:
+        message_ids = mail.get_message_ids(session=session,
+                                           folder=folder,
+                                           search_criteria=search_criteria)
+        if len(message_ids) == num_previous_message_ids:
+            time.sleep(config['sleep_time_between_checks'])
+            continue
+        metadata = mail.get_messages_metadata(session=session,
+                                              message_ids=message_ids)
+        num_previous_message_ids = len(message_ids)
+        ret = metadata if message_ids != [''] else {}
+        if config['threading_enabled']:
+            results_queue.put(ret)
+            time.sleep(config['sleep_time_between_checks'])
+        else:
+            return ret
 
 
-if __name__ == '__main__':
+def worker():
+    imap_session = None
     while True:
         try:
             imap_session.noop()
@@ -44,49 +60,49 @@ if __name__ == '__main__':
             dest_folder = src_folder + config['reports']['folder_suffix']
             mail.ensure_mail_folder_exists(imap_session, dest_folder)
 
-            # src_message_ids = mail.get_message_ids(session=imap_session,
-            #                                        folder=src_folder,
-            #                                        search_criteria='(FROM "{}")'.format(auth['email']['recv_reports_from_address']))
-            # src_messages_metadata = mail.get_messages_metadata(session=imap_session,
-            #                                                    message_ids=src_message_ids) if src_message_ids != [''] else {}
             if config['threading_enabled']:
-                while not src_metadata_queue.empty():
-                    src_messages_metadata = src_metadata_queue.get()
-                if threading.active_count() == 1:
-                    src_thread = threading.Thread(target=build_metadata,
+                src_thread_name = 'src_thread'
+                dest_thread_name = 'dest_thread'
+                if not re.match('<Thread\({},.*'.format(src_thread_name), str(threading.enumerate())):
+                    src_thread = threading.Thread(name=src_thread_name,
+                                                  target=build_metadata,
                                                   kwargs={'queue': src_metadata_queue,
                                                  'session': imap_session,
                                                  'folder': src_folder,
                                                  'search_criteria': '(FROM "{}")'.format(auth['email']['recv_reports_from_address'])})
                     src_thread.start()
-                    dest_thread = threading.Thread(target=build_metadata,
+                if not re.match('<Thread\({},.*'.format(dest_thread_name), str(threading.enumerate())):
+                    dest_thread = threading.Thread(name=dest_thread_name,
+                                                   target=build_metadata,
                                                    kwargs={'queue': dest_metadata_queue,
                                                            'session': imap_session,
                                                            'folder': dest_folder,
                                                            'search_criteria': 'ALL'})
                     dest_thread.start()
+
+                    while not src_metadata_queue.empty():
+                        src_messages_metadata = src_metadata_queue.get()
+                    while not dest_metadata_queue.empty():
+                        dest_messages_metadata = dest_metadata_queue.get()
                 else:
                     print('thread in progress: skipping building metadata')  # FIXME
             else:
-                src_messages_metadata = build_metadata(queue=src_metadata_queue,
+                src_messages_metadata = build_metadata(results_queue=src_metadata_queue,
                                                        session=imap_session,
                                                        folder=src_folder,
                                                        search_criteria='(FROM "{}")'.format(auth['email']['recv_reports_from_address']))
-                dest_messages_metadata = build_metadata(queue=dest_metadata_queue,
+                dest_messages_metadata = build_metadata(results_queue=dest_metadata_queue,
                                                         session=imap_session,
                                                         folder=dest_folder,
                                                         search_criteria='ALL')
 
-            # dest_message_ids = mail.get_message_ids(session=imap_session,
-            #                                         folder=dest_folder)
-            # dest_messages_metadata = mail.get_messages_metadata(imap_session, dest_message_ids) if dest_message_ids != [''] else {}
             if src_messages_metadata is None or dest_messages_metadata is None:
                 print('metadata does not exist: sleep and continue loop')  # FIXME
                 time.sleep(config['sleep_time_between_checks'])
                 continue
-            unique_subjects = get_unique_dict_keys(src_messages_metadata, dest_messages_metadata)
+            unique_subjects = set(src_messages_metadata) - set(dest_messages_metadata)
             if len(unique_subjects) > 0:
-                print('processing {} unique messages not in destination folder')  # FIXME
+                print('processing {} unique messages not in destination folder'.format(len(unique_subjects)))  # FIXME
             else:
                 print('no unique messages found: sleep and continue loop')  # FIXME
                 time.sleep(config['sleep_time_between_checks'])
@@ -111,3 +127,10 @@ if __name__ == '__main__':
                                             attachment=fully_qualified_pdf)
                 print('message processing completed: sleep and continue loop')  # FIXME
                 time.sleep(config['sleep_time_between_checks'])
+
+
+if __name__ == '__main__':
+    try:
+        worker()
+    except Exception as e:
+        print('run failed: {}'.format(e))  # FIXME
