@@ -1,19 +1,21 @@
+from email import message_from_string, encoders
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
 import imaplib
 import re
 import os
 import time
-from email import message_from_string, encoders
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
+
+from extract_zipped_email_attachments.logger import log
 
 
 def establish_imap_session(host, port, user, password):
-    print('creating imap session')  # FIXME
+    log.info('creating imap session')
     session = imaplib.IMAP4_SSL(host=host, port=port)
     typ, account_details = session.login(user=user, password=password)
 
     if typ != 'OK':
-        print('unable to sign in')  # FIXME
+        log.critical('unable to sign in')
         exit(1)
     return session
 
@@ -50,7 +52,7 @@ def get_messages_metadata(session, message_ids: list):
     :return: dict
     """
     # TODO: This is too complex.. make this a class.
-    print('building message metadata dictionary')  # FIXME
+    log.info('building message metadata dictionary')
     metadata = {}
     for message_id in message_ids:
         msg_string = session.fetch(str(message_id), '(RFC822)')[1][0][1].decode()
@@ -75,16 +77,17 @@ def get_message_ids(session, folder, search_criteria='ALL'):
     :param folder: inbox to search
     :return: list of message ids, as strings
     """
-    print('getting message ids')  # FIXME
+    log.info('getting message ids')
     session.select(folder, readonly=True)
     typ, message_ids = session.search(None, search_criteria)
     if typ != 'OK':
-        print('error searching src_folder')  # FIXME
-    print('found {} messages in folder {}'.format(len(message_ids[0].split()), folder))  # FIXME
+        log.error('error searching src_folder')
+    log.info('found {} messages in folder {}'.format(len(message_ids[0].split()), folder))
     return [message_id.decode() for message_id in message_ids][0].split()
 
 
 def get_message_id_by_subject(subject, *metadata_dicts):
+    log.debug('getting message by id')
     for md in metadata_dicts:
         try:
             return str(md[subject]['message_id'])
@@ -102,11 +105,11 @@ def download_attachment(session, folder, message_id, download_dir):
     :param download_dir: target directory to save attachment to
     :return: str: path of downloaded attachment
     """
-    print('downloading attachment for message id {}'.format(message_id))
+    log.debug('downloading attachment for message id {}'.format(message_id))
     session.select(folder, readonly=True)
     typ, message_parts = session.fetch(message_id, '(RFC822)')
     if typ != 'OK':
-        print('error fetching mail')  # FIXME
+        log.error('error fetching mail')
 
     try:
         msg = message_from_string(message_parts[0][1].decode())
@@ -120,11 +123,11 @@ def download_attachment(session, folder, message_id, download_dir):
                 attachment.write(part.get_payload(decode=True))
             return file_name
     except:
-        print('error downloading file from message with id {}'.format(message_id))  # FIXME
+        log.error('error downloading file from message with id {}'.format(message_id))
 
 
 def append_message(session, folder, subject, to_address, from_address, attachment):
-    print('appending attachment with subject {} to folder {}'.format(subject, folder))
+    log.debug('appending attachment with subject {} to folder {}'.format(subject, folder))
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['To'] = to_address

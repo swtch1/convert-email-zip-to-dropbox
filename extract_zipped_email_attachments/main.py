@@ -4,9 +4,11 @@ import os
 from extract_zipped_email_attachments.settings import config, auth
 from extract_zipped_email_attachments.zip import ZippedFile
 from extract_zipped_email_attachments import mail
+from extract_zipped_email_attachments.logger import log
 
 
 def worker():
+    log.debug('starting worker')
     imap_session = mail.establish_imap_session(host=config['imap']['server']['incoming'],
                                                port=config['imap']['port']['incoming'],
                                                user=auth['email']['address'],
@@ -30,7 +32,7 @@ def worker():
         with tempfile.TemporaryDirectory() as downloads_dir:
             for subject in sorted_unique_subjects:
                 message_id = mail.get_message_id_by_subject(subject, src_messages_metadata)
-                print('processing id {}'.format(message_id))  # TODO: remove - testing
+                log.debug('processing id {}'.format(message_id))
                 attachment = mail.download_attachment(imap_session, src_folder, message_id, downloads_dir)
                 zipped_file = ZippedFile(attachment, password=auth['zip']['password'])
                 if zipped_file.zip_invalid:
@@ -47,7 +49,8 @@ def worker():
                                         attachment=fully_qualified_pdf)
 
 if __name__ == '__main__':
+    log.debug('starting application')
     try:
         worker()
     except Exception as e:
-        print(e)  # FIXME
+        log.error(e)

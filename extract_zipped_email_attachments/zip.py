@@ -2,6 +2,8 @@ import zipfile
 import os
 import re
 
+from extract_zipped_email_attachments.logger import log
+
 
 class ZippedFile(object):
     def __init__(self, zip_file, password=None):
@@ -10,15 +12,15 @@ class ZippedFile(object):
         self.zip_invalid = False
 
         if self.zip_file is None:
-            print('expected zipfile, got None')  # FIXME
+            log.error('expected zipfile, got None')
             self.zip_invalid = True
             return
         if not os.path.isfile(self.zip_file):
-            print('{} does not exist'.format(self.zip_file))  # FIXME
+            log.error('{} does not exist'.format(self.zip_file))
             self.zip_invalid = True
             return
         if not zipfile.is_zipfile(self.zip_file):
-            print('{} is not a zip file'.format(self.zip_file))
+            log.error('{} is not a zip file'.format(self.zip_file))
             self.zip_invalid = True
             return
         if not isinstance(self.password, str) or self.password == None:
@@ -32,7 +34,7 @@ class ZippedFile(object):
         Return all PDF files included in the archive.
         :return: list
         """
-        print('getting pdfs from zip archive')  # FIXME
+        log.info('getting pdfs from zip archive')
         with zipfile.ZipFile(self.zip_file, 'r') as zipped_file:
             return [pdf for pdf in zipped_file.namelist() if re.match('.*\.pdf', pdf.lower())]
 

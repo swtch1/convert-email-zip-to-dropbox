@@ -8,4 +8,4 @@ imap:
 reports:
   # suffix to append to folder where reports will be stored
   folder_suffix: -reports
-
+log_level: INFO
