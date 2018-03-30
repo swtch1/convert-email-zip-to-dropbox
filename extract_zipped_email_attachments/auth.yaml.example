@@ -1,0 +1,11 @@
+email:
+  address: me@email.com
+  password: 'S3curePass'
+  folders_to_search: [Inbox/folder1
+                      Inbox/folder2]
+  # address to show as from when adding to reports folder
+  send_reports_from_address: reports@email.com
+  # expected from address on incoming reports
+  recv_reports_from_address: fromreports@email.com
+zip:
+  password: password
