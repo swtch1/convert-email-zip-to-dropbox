@@ -9,3 +9,4 @@ reports:
   # suffix to append to folder where reports will be stored
   folder_suffix: -reports
 log_level: INFO
+log_file: c:/tmp/email_extraction.log

@@ -30,4 +30,4 @@ def build_logger(log_level, log_file_location=None):
 
     return logger
 
-log = build_logger(log_level=config['log_level'])
+log = build_logger(log_level=config['log_level'], log_file_location=config['log_file'])
